@@ -1,0 +1,28 @@
+# Stage 4/5 — the same single verify command Claude runs locally, as a PR check.
+# On failure, Claude triages the log read-only and writes a short summary (CI/CD play, step 1).
+name: sdlc-verify
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    env:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      # {{SETUP_STEPS}}
+      - name: Verify
+        run: |
+          set -o pipefail
+          {{VERIFY}} 2>&1 | tee verify.log
+      - name: Triage failure (read-only)
+        if: failure() && env.ANTHROPIC_API_KEY != ''
+        run: |
+          npm install -g @anthropic-ai/claude-code
+          claude -p "Read verify.log. Identify the most likely cause, say whether the failure looks flaky or real, and write a summary of at most five lines with the file and line to look at." \
+            --allowedTools "Read,Grep,Glob" --max-turns 8 > triage.md || true
+          { echo "## Claude triage"; cat triage.md; } >> "$GITHUB_STEP_SUMMARY"

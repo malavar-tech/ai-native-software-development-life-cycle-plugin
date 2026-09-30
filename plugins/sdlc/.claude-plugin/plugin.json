@@ -1,0 +1,8 @@
+{
+  "name": "sdlc",
+  "version": "0.1.0",
+  "description": "The AI-native SDLC loop from Anthropic Academy's playbook: committed intent/spec/plan artifacts, a verification feedback loop, hooks as guardrails and approval gates, agentic review, evals and incident-to-intent.",
+  "author": { "name": "Esteban Simón" },
+  "license": "MIT",
+  "keywords": ["sdlc", "intent", "spec", "plan-mode", "hooks", "evals", "code-review", "incident"]
+}

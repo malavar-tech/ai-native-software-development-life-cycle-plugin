@@ -1,0 +1,44 @@
+{
+  "version": 1,
+  "project": "{{PROJECT_NAME}}",
+  "language": "{{LANGUAGE}}",
+  "mode": "{{MODE}}",
+  "approvers": {
+    "intent": "{{INTENT_APPROVER}}",
+    "spec": "{{SPEC_APPROVER}}",
+    "plan": "{{PLAN_APPROVER}}",
+    "release": "{{RELEASE_APPROVER}}"
+  },
+  "intentDir": "intent",
+  "commands": {
+    "verify": "{{VERIFY}}",
+    "test": "{{TEST}}",
+    "build": "{{BUILD}}",
+    "lint": "{{LINT}}",
+    "format": "{{FORMAT_FILE_COMMAND}}"
+  },
+  "paths": {
+    "tests": {{TEST_GLOBS}},
+    "secrets": [".env", ".env.*", "**/*.pem", "**/*.key", "**/*.p12", "**/secrets/**", "**/.secrets/**"],
+    "secretsAllow": ["**/.env.example", "**/.env.sample", "**/.env.template", "**/*.example"],
+    "protected": {{PROTECTED_GLOBS}},
+    "guarded": {{GUARDED_GLOBS}}
+  },
+  "gates": {
+    "deny": [
+      "\\bgit\\s+push\\b[^\\n]*\\s(--force|-f)\\b[^\\n]*\\b(main|master)\\b",
+      "\\bgit\\s+push\\b[^\\n]*\\b(main|master)\\b[^\\n]*\\s(--force|-f)\\b"
+    ],
+    "ask": [
+      "\\bgit\\s+push\\b[^\\n]*\\s(--force|-f)\\b",
+      "\\bgit\\s+push\\b[^\\n]*\\s(origin\\s+)?(main|master)\\b",
+      "(^|\\s)--prod(uction)?\\b",
+      "\\bdeploy\\b[^\\n]*\\bprod(uction)?\\b",
+      "\\b(terraform|tofu)\\s+(apply|destroy)\\b",
+      "\\bkubectl\\b[^\\n]*\\b(apply|delete|rollout|scale)\\b",
+      "\\bhelm\\s+(install|upgrade|uninstall|rollback)\\b"{{EXTRA_ASK_GATES}}
+    ]
+  },
+  "verifyOnStop": {{VERIFY_ON_STOP}},
+  "verifyTimeoutSec": 600
+}

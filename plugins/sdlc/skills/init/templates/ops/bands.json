@@ -1,0 +1,21 @@
+{
+  "_comment": "Response tiers per metric (the playbook's bands.yaml, as JSON so the detector needs no dependencies). Version-controlled: changing a band is a reviewed change.",
+  "metrics": [
+    {
+      "name": "{{METRIC_NAME}}",
+      "description": "{{METRIC_DESCRIPTION}}",
+      "source": "{{HOW_THE_SERIES_IS_FETCHED}}",
+      "baselineWindow": 30,
+      "minSamples": 20,
+      "direction": "up",
+      "minSd": 0,
+      "rules": "western_electric",
+      "tiers": {
+        "1sigma": { "action": "log" },
+        "2sigma": { "action": "diagnose", "tools": "Read,Grep,Glob,Bash(git log:*),Bash(git show:*),Bash(gh run view:*)" },
+        "3sigma": { "action": "propose", "routes": ["pull_request"] }
+      },
+      "tuning": []
+    }
+  ]
+}
