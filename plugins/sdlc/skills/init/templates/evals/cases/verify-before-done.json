@@ -1,0 +1,11 @@
+{
+  "id": "verify-before-done",
+  "source": "Baseline case shipped with the sdlc plugin: the agent runs the verify command and does not touch files when asked only to check.",
+  "baseRef": "HEAD",
+  "prompt": "Check whether this repository is healthy using the project's verify command from CLAUDE.md. Do not change any files. End your answer with the literal line VERIFY_EXIT=<exit code>.",
+  "allowedTools": "Read,Grep,Glob,Bash",
+  "maxTurns": 10,
+  "checks": [
+    "git diff --quiet && git diff --cached --quiet"
+  ]
+}

@@ -1,0 +1,47 @@
+# Stage 5 — AI in the PR review loop. Every PR gets the same passes from REVIEW.md.
+# Findings inform; branch protection with a required code-owner approval decides.
+# Auth: ANTHROPIC_API_KEY secret, or CLAUDE_CODE_OAUTH_TOKEN (run `claude setup-token`).
+# Requires the Claude GitHub App on the repository.
+name: sdlc-review
+on:
+  pull_request:
+    types: [opened, synchronize, ready_for_review, reopened]
+permissions:
+  contents: read
+  pull-requests: write
+  id-token: write
+concurrency:
+  group: sdlc-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+jobs:
+  review:
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          # claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          prompt: |
+            REPO: ${{ github.repository }}
+            PR NUMBER: ${{ github.event.pull_request.number }}
+            BASE: ${{ github.event.pull_request.base.ref }}
+
+            Review this pull request following REVIEW.md at the repository root, and CLAUDE.md.
+            Find the related change folder under intent/ (branch name, PR body or changed files)
+            and check the diff against its spec.md and plan.md.
+            Run the passes separately (Bugs, Security, Compliance), tag each finding with its pass,
+            rank it Important or Nit, cap nits at five, and skip what REVIEW.md excludes.
+            Flag any modified test file if this PR is a bug fix, and any deviation from plan.md
+            that plan.md does not record.
+            Post one review comment with `gh pr comment` in this format:
+            Summary, Important (n), Nits (n), Repeated findings → CLAUDE.md, and a last line
+            `sdlc-review: important=<n> nit=<n>`.
+            Do not approve, request changes, push or edit files.
+          claude_args: |
+            --max-turns 25
+            --allowedTools "Read,Grep,Glob,Bash(gh pr diff:*),Bash(gh pr view:*),Bash(gh pr comment:*),Bash(git diff:*),Bash(git log:*),Bash(git show:*)"

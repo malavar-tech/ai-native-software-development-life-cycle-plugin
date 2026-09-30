@@ -1,0 +1,35 @@
+# CI of the kit itself: keeps the seed from rotting silently.
+# Runs the hook and detector tests and validates the plugin and marketplace manifests
+# against the latest Claude Code, on every push/PR and nightly.
+name: ci
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: '23 4 * * *'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Hook and detector tests
+        run: node --test tests/*.test.mjs
+      - name: Shell syntax
+        run: bash -n plugins/sdlc/skills/init/templates/evals/run.sh
+      - name: JSON templates parse (placeholders aside)
+        run: |
+          for f in plugins/sdlc/hooks/hooks.json plugins/sdlc/skills/init/templates/ops/bands.json \
+                   plugins/sdlc/skills/init/templates/evals/cases/*.json; do
+            node -e "JSON.parse(require('fs').readFileSync('$f','utf8'))" && echo "ok $f"
+          done
+      - name: Validate plugin and marketplace with the latest Claude Code
+        run: |
+          npm install -g @anthropic-ai/claude-code
+          claude plugin validate ./plugins/sdlc
+          claude plugin validate .

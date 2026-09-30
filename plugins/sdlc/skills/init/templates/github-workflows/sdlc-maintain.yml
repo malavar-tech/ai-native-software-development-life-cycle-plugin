@@ -1,0 +1,50 @@
+# Stage 6 — Closing the loop on metrics (optional).
+# A deterministic detector watches one metric; Claude is only invoked when a band is breached.
+# 1. Replace the "Fetch series" step with whatever produces a JSON array of numbers
+#    (oldest first, last = current value) for the metric in ops/bands.json.
+# 2. Tier 2 (2σ): Claude diagnoses read-only and opens a PR with intent/<id>/intent.md.
+#    Tier 3 (3σ): same, and may propose a fix PR; runbooks (e.g. rollback) stay human-approved.
+name: sdlc-maintain
+on:
+  schedule:
+    - cron: '7 * * * *'
+  workflow_dispatch:
+permissions:
+  contents: write
+  pull-requests: write
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch series
+        run: |
+          # Example: produce ops/series.json, e.g. [0.02, 0.03, ..., 0.11]
+          echo "Replace this step with your metric query" && exit 1
+      - name: Detect
+        id: detect
+        run: |
+          node ops/detect.mjs --metric {{METRIC_NAME}} < ops/series.json > ops/breach.json
+          echo "tier=$(node -p "require('./ops/breach.json').tier")" >> "$GITHUB_OUTPUT"
+          cat ops/breach.json
+      - name: Diagnose and write intent.md
+        if: steps.detect.outputs.tier >= 2
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          npm install -g @anthropic-ai/claude-code
+          ID="$(date -u +%Y-%m-%d)-incident-{{METRIC_NAME}}-$(date -u +%H%M)"
+          mkdir -p "intent/$ID"
+          claude -p "A control band was breached: $(cat ops/breach.json). Diagnose read-only using the repository history, recent commits and CI runs. Reply ONLY with an intent.md following intent/_templates/intent.md, with Status: triage and Source: incident, covering the anomaly and its evidence, a proposed outcome, affected systems and open questions." \
+            --allowedTools "Read,Grep,Glob,Bash(git log:*),Bash(git show:*),Bash(gh run view:*),Bash(gh run list:*)" \
+            --max-turns 20 > "intent/$ID/intent.md"
+          git config user.name "sdlc-maintain"
+          git config user.email "sdlc-maintain@users.noreply.github.com"
+          git checkout -b "sdlc/$ID"
+          git add "intent/$ID/intent.md"
+          git commit -m "sdlc($ID): incident intent (tier ${{ steps.detect.outputs.tier }})"
+          git push -u origin "sdlc/$ID"
+          gh pr create --title "Incident: $ID" --body "Automatic diagnosis for triage (fix now / schedule / dismiss). Breach: $(cat ops/breach.json)" --label triage || \
+            gh pr create --title "Incident: $ID" --body "Automatic diagnosis for triage (fix now / schedule / dismiss)."

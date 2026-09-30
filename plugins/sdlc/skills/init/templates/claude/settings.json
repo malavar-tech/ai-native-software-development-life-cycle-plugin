@@ -1,0 +1,24 @@
+{
+  "extraKnownMarketplaces": {
+    "ai-native-sdlc": {
+      "source": { "source": "github", "repo": "{{MARKETPLACE_REPO}}" }
+    }
+  },
+  "enabledPlugins": {
+    "sdlc@ai-native-sdlc": true
+  },
+  "permissions": {
+    "allow": [
+      {{ALLOWED_COMMANDS}}
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git show:*)"
+    ],
+    "deny": [
+      "Read(./.env)",
+      "Read(./.env.*)",
+      "Read(./**/secrets/**)"
+    ]
+  }
+}

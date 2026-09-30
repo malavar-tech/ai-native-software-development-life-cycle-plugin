@@ -1,0 +1,13 @@
+{
+  "id": "short-kebab-id",
+  "source": "Where this task came from: a merged PR, an incident (intent/<id>), a review finding",
+  "baseRef": "Commit SHA where the task starts (before the real fix/feature landed)",
+  "prompt": "The task exactly as a person would give it to Claude.",
+  "allowedTools": "Read,Grep,Glob,Edit,Write,Bash",
+  "maxTurns": 30,
+  "checks": [
+    "Shell commands run inside the task's worktree after Claude finishes; each must exit 0",
+    "npm test -- path/to/relevant.test.ts",
+    "git diff --quiet HEAD -- path/to/tests/ || (echo 'tests were modified' && exit 1)"
+  ]
+}

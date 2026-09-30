@@ -1,0 +1,16 @@
+{
+  "name": "ai-native-sdlc",
+  "owner": { "name": "Esteban Simón" },
+  "metadata": {
+    "description": "Stack-agnostic implementation of Anthropic Academy's AI-native SDLC playbook for Claude Code.",
+    "version": "0.1.0"
+  },
+  "plugins": [
+    {
+      "name": "sdlc",
+      "source": "./plugins/sdlc",
+      "description": "The AI-native SDLC loop: intent → spec → plan → build → verify → review → gated deploy → incident → intent.",
+      "version": "0.1.0"
+    }
+  ]
+}
